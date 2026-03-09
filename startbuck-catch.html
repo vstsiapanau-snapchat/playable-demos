@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Play & Sip Something New</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Prevent page scrolling while playing */
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            background: radial-gradient(circle at center, #006241 0%, #1e3932 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Subtle Background Pattern */
+        .ad-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(circle at 100% 150%, #006241 24%, white 24%, white 25%, #006241 25%, #006241 36%, white 36%, white 37%, transparent 37%, transparent),
+                radial-gradient(circle at 0 150%, #006241 24%, white 24%, white 25%, #006241 25%, #006241 36%, white 36%, white 37%, transparent 37%, transparent);
+            background-size: 100px 100px;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 20;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #006241;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .score-pill {
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 1;
+            transition: opacity 0.5s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Game Screen */
+        #screen-game {
+            z-index: 5;
+        }
+
+        /* Tilt Hint */
+        .tilt-hint {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 1s ease;
+            pointer-events: none;
+            z-index: 8;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Player Frappuccino Cup */
+        .player-cup {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 60px;
+            line-height: 1;
+            z-index: 10;
+            will-change: left;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+        }
+
+        /* Falling Items */
+        .falling-item {
+            position: absolute;
+            font-size: 40px;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.3));
+            z-index: 6;
+            will-change: top;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* +1 Float Text */
+        .float-text {
+            position: absolute;
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffc107;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 11;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-60px) scale(1.3); opacity: 0; }
+        }
+
+        /* Result Screens (Win/Lose) */
+        .overlay-screen {
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 30;
+        }
+
+        .result-card {
+            background: #f4f4f4;
+            color: #333;
+            width: 100%;
+            max-width: 340px;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 70px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #000;
+            margin-bottom: 15px;
+        }
+
+        .result-desc {
+            font-size: 16px;
+            color: #444;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: 2px solid #000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #000;
+            transition: background 0.2s;
+        }
+
+        .action-btn:active {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-container" id="game-container">
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">☕</div>
+            <div class="brand-text-wrapper">
+                <h1>Starbucks - Ad</h1>
+                <p>Play & sip something new.</p>
+            </div>
+        </div>
+        <div class="score-pill" id="score-pill">
+            <span style="color: #ffc107;">⭐</span> <span id="score-text">0/6</span>
+        </div>
+    </header>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen active">
+        <div class="tilt-hint" id="tilt-hint">📱 Tilt your phone to catch treats!</div>
+        <div class="player-cup" id="player">🥤</div>
+    </div>
+
+    <!-- Win Screen -->
+    <div id="screen-win" class="screen overlay-screen">
+        <div class="result-card">
+            <div class="result-image">🎉</div>
+            <h2 class="result-title">You Won!</h2>
+            <p class="result-desc">You've unlocked a<br>FREE Starbucks drink!</p>
+            <button class="action-btn" onclick="resetGame()">↺ Play Again</button>
+        </div>
+    </div>
+
+    <!-- Lose Screen (Caught Bomb) -->
+    <div id="screen-lose" class="screen overlay-screen">
+        <div class="result-card">
+            <div class="result-image">💥</div>
+            <h2 class="result-title">Boom!</h2>
+            <p class="result-desc">You caught a bomb!<br>Avoid the bombs next time.</p>
+            <button class="action-btn" onclick="resetGame()">↺ Try Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Game Configuration
+    const TARGET_SCORE = 6;
+    const GOOD_ITEMS = ['🍩', '☕', '⭐', '🎁', '🧁', '🍪'];
+    const BAD_ITEMS = ['💣'];
+
+    // State
+    let score = 0;
+    let isPlaying = false;
+    let gameLoop;
+    let spawnInterval;
+    let activeItems = [];
+
+    // DOM Elements
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const screenGame = document.getElementById('screen-game');
+    const screenWin = document.getElementById('screen-win');
+    const screenLose = document.getElementById('screen-lose');
+    const scoreText = document.getElementById('score-text');
+    const tiltHint = document.getElementById('tilt-hint');
+
+    // Player Configuration
+    let playerX = container.clientWidth / 2;
+    const playerWidth = 60; // Approximate width of emoji
+
+    // Automatically start game
+    window.onload = () => {
+        setupControls();
+        startGame();
+
+        // Fade out hint
+        setTimeout(() => {
+            tiltHint.style.opacity = '0';
+        }, 3500);
+    };
+
+    function startGame() {
+        score = 0;
+        updateScoreUI();
+        isPlaying = true;
+
+        // Clear old items from logic and DOM
+        activeItems.forEach(item => item.el.remove());
+        activeItems = [];
+
+        // Game loops
+        spawnInterval = setInterval(spawnItem, 800);
+        gameLoop = requestAnimationFrame(update);
+    }
+
+    function spawnItem() {
+        if (!isPlaying) return;
+
+        // 25% chance for a bomb
+        const isBad = Math.random() > 0.75;
+        const charSet = isBad ? BAD_ITEMS : GOOD_ITEMS;
+        const emoji = charSet[Math.floor(Math.random() * charSet.length)];
+
+        // Create element
+        const itemEl = document.createElement('div');
+        itemEl.classList.add('falling-item');
+        itemEl.innerText = emoji;
+
+        // Random X position ensuring it stays within container bounds
+        const itemWidth = 40;
+        const startX = Math.random() * (container.clientWidth - itemWidth);
+        itemEl.style.left = `${startX}px`;
+        itemEl.style.top = `-50px`;
+
+        screenGame.appendChild(itemEl);
+
+        // Track state fully inside JS to avoid DOM lookup errors
+        activeItems.push({
+            el: itemEl,
+            y: -50,
+            x: startX,
+            speed: 3.5 + Math.random() * 2.5, // Fall speed variance
+            type: isBad ? 'bad' : 'good'      // Perfectly decoupled from DOM
+        });
+    }
+
+    function update() {
+        if (!isPlaying) return;
+
+        // Using bounding rects is very reliable for collision
+        const playerRect = player.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Loop backwards so we can safely splice items from the array
+        for (let i = activeItems.length - 1; i >= 0; i--) {
+            let item = activeItems[i];
+
+            // Move item down
+            item.y += item.speed;
+            item.el.style.top = `${item.y}px`;
+
+            const itemRect = item.el.getBoundingClientRect();
+
+            // AABB Collision Detection
+            // Added padding so you have to actually hit the cup part, not just the bounding box edge
+            const collisionPaddingX = 10;
+            const collisionPaddingY = 15;
+
+            if (
+                itemRect.left < (playerRect.right - collisionPaddingX) &&
+                itemRect.right > (playerRect.left + collisionPaddingX) &&
+                itemRect.bottom > (playerRect.top + collisionPaddingY) &&
+                itemRect.top < playerRect.bottom
+            ) {
+                // Catch Logic
+                handleCatch(item, i);
+                continue;
+            }
+
+            // Missed item (fell past screen)
+            if (item.y > containerRect.height) {
+                item.el.remove();
+                activeItems.splice(i, 1);
+            }
+        }
+
+        // Loop execution
+        if (isPlaying) {
+            gameLoop = requestAnimationFrame(update);
+        }
+    }
+
+    function handleCatch(item, index) {
+        // Read the type safely from our JS object
+        if (item.type === 'good') {
+            score++;
+            showFloatText('+1', item.x, player.offsetTop - 40);
+            updateScoreUI();
+
+            // Clean up item
+            item.el.remove();
+            activeItems.splice(index, 1);
+
+            // Win Condition
+            if (score >= TARGET_SCORE) {
+                triggerWin();
+            }
+        } else if (item.type === 'bad') {
+            // Bomb caught -> Instant Lose
+            triggerLose();
+        }
+    }
+
+    function showFloatText(text, x, y) {
+        const floatEl = document.createElement('div');
+        floatEl.classList.add('float-text');
+        floatEl.innerText = text;
+        floatEl.style.left = `${x}px`;
+        floatEl.style.top = `${y}px`;
+        screenGame.appendChild(floatEl);
+
+        setTimeout(() => {
+            floatEl.remove();
+        }, 800);
+    }
+
+    function updateScoreUI() {
+        scoreText.innerText = `${score}/${TARGET_SCORE}`;
+    }
+
+    function stopEngine() {
+        isPlaying = false;
+        cancelAnimationFrame(gameLoop);
+        clearInterval(spawnInterval);
+    }
+
+    function triggerWin() {
+        stopEngine();
+        setTimeout(() => {
+            screenWin.classList.add('active');
+        }, 300);
+    }
+
+    function triggerLose() {
+        stopEngine();
+        // Slight delay gives visual impact of catching it
+        setTimeout(() => {
+            screenLose.classList.add('active');
+        }, 100);
+    }
+
+    function resetGame() {
+        screenWin.classList.remove('active');
+        screenLose.classList.remove('active');
+
+        // Show tilt hint again briefly
+        tiltHint.style.opacity = '1';
+        setTimeout(() => {
+            tiltHint.style.opacity = '0';
+        }, 3000);
+
+        startGame();
+    }
+
+    // --- CONTROLS --- //
+    function setupControls() {
+        const updatePlayerX = (clientX) => {
+            const containerRect = container.getBoundingClientRect();
+            // Map clientX relative to the container
+            let x = clientX - containerRect.left;
+
+            // Clamp value so cup stays on screen
+            if (x < playerWidth / 2) x = playerWidth / 2;
+            if (x > containerRect.width - playerWidth / 2) x = containerRect.width - playerWidth / 2;
+
+            playerX = x;
+            player.style.left = `${playerX}px`;
+        };
+
+        // Touch & Drag Controls
+        container.addEventListener('touchmove', (e) => {
+            if(!isPlaying) return;
+            e.preventDefault();
+            updatePlayerX(e.touches[0].clientX);
+        }, { passive: false });
+
+        let isMouseDown = false;
+        container.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            updatePlayerX(e.clientX);
+        });
+        window.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+        container.addEventListener('mousemove', (e) => {
+            if (isMouseDown && isPlaying) updatePlayerX(e.clientX);
+        });
+
+        // Device Orientation (Tilt)
+        window.addEventListener('deviceorientation', (e) => {
+            if (!isPlaying || e.gamma === null) return;
+
+            let tilt = e.gamma;
+
+            // Constrain tilt sensitivity (-30 to 30 degrees)
+            if (tilt > 30) tilt = 30;
+            if (tilt < -30) tilt = -30;
+
+            const containerWidth = container.clientWidth;
+            let newX = (containerWidth / 2) + ((tilt / 30) * (containerWidth / 2));
+
+            // Clamp
+            if (newX < playerWidth / 2) newX = playerWidth / 2;
+            if (newX > containerWidth - playerWidth / 2) newX = containerWidth - playerWidth / 2;
+
+            playerX = newX;
+            player.style.left = `${playerX}px`;
+        });
+    }
+</script>
+
+</body>
+</html>

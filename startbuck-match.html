@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Match Drinks, Get Rewarded</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            background: #0d281d;
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Subtle Background Pattern */
+        .ad-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(circle at 100% 150%, #006241 24%, white 24%, white 25%, #006241 25%, #006241 36%, white 36%, white 37%, transparent 37%, transparent),
+                radial-gradient(circle at 0 150%, #006241 24%, white 24%, white 25%, #006241 25%, #006241 36%, white 36%, white 37%, transparent 37%, transparent);
+            background-size: 100px 100px;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 10;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #006241;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .score-pill {
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        /* Start Screen */
+        #screen-start {
+            background: #0d281d;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20; /* Highest so it covers everything on load */
+        }
+
+        .start-logo {
+            width: 70px;
+            height: 70px;
+            background: white;
+            color: #006241;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 35px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .start-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .start-subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 15px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .start-loading {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Game Board Area */
+        #screen-game {
+            top: 65px; /* Push down below header */
+            height: calc(100% - 65px);
+            padding: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%;
+            max-height: 500px;
+        }
+
+        /* Cards */
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner,
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .card-back {
+            background: #193f31;
+            border: 2px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-front {
+            background: #ffffff;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #333;
+            position: relative;
+        }
+
+        .card-emoji {
+            font-size: 55px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1));
+        }
+
+        .card-name {
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+            color: #000;
+        }
+
+        /* Match Checkmark Badge */
+        .match-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: #006241;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 10px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition-delay: 0.2s;
+            z-index: 10;
+        }
+
+        .card.matched .match-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Result Screen */
+        #screen-result {
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 15;
+        }
+
+        .result-card {
+            background: #f0f0f0;
+            color: #333;
+            width: 100%;
+            max-width: 320px;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .result-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #000;
+            margin-bottom: 10px;
+        }
+
+        .result-desc {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .play-again-btn {
+            background: transparent;
+            border: 2px solid #000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #000;
+            transition: all 0.2s;
+        }
+
+        .play-again-btn:active {
+            background: rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="ad-container">
+
+    <!-- Start Screen (Loading Overlay) -->
+    <div id="screen-start" class="screen active">
+        <div class="start-logo">☕</div>
+        <h2 class="start-title">Starbucks</h2>
+        <p class="start-subtitle">Match for a free drink</p>
+        <p class="start-loading">Get ready to play...</p>
+    </div>
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">☕</div>
+            <div class="brand-text-wrapper">
+                <h1>Starbucks - Ad</h1>
+                <p>Match drinks, get rewarded.</p>
+            </div>
+        </div>
+        <div class="score-pill">
+            <span style="opacity: 0.8;">🥤</span> <span id="score-text">0/3</span>
+        </div>
+    </header>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+        <div class="game-board" id="board">
+            <!-- Cards generated by JS -->
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="result-card">
+            <div class="result-image">🎉</div>
+            <h2 class="result-title">You Matched!</h2>
+            <p class="result-desc">You've unlocked a<br>FREE Starbucks drink!</p>
+            <button class="play-again-btn" onclick="initGame()">↺ Play Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Drink Data Setup
+    const drinks = [
+        { id: 'ube', emoji: '🟣', name: 'Ube Coconut' },
+        { id: 'mocha', emoji: '🧋', name: 'Dubai Mocha' },
+        { id: 'pink', emoji: '🍧', name: 'Pink Cannon Ball' }
+    ];
+
+    // SVG string for the cup outline on the back of the card
+    const cupSvg = `
+        <svg viewBox="0 0 24 24" width="50" height="50" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 4h14l-1.5 15h-11z" />
+            <path d="M4 4h16" />
+            <circle cx="12" cy="12" r="3" />
+        </svg>
+    `;
+
+    // Game State
+    let cards = [];
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    let matchesFound = 0;
+
+    const boardElement = document.getElementById('board');
+    const scoreTextElement = document.getElementById('score-text');
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenResult = document.getElementById('screen-result');
+
+    // Initial Loading Sequence
+    setTimeout(() => {
+        screenStart.classList.remove('active');
+        screenGame.classList.add('active');
+        initGame();
+    }, 2500);
+
+    function initGame() {
+        // Reset state
+        hasFlippedCard = false;
+        lockBoard = false;
+        firstCard = null;
+        secondCard = null;
+        matchesFound = 0;
+        scoreTextElement.innerText = '0/3';
+
+        // Hide result, ensure game is visible
+        screenResult.classList.remove('active');
+
+        // Create pairs and shuffle
+        cards = [...drinks, ...drinks];
+        cards.sort(() => Math.random() - 0.5);
+
+        // Build DOM
+        boardElement.innerHTML = '';
+        cards.forEach((drink) => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            cardEl.dataset.id = drink.id;
+
+            cardEl.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back">
+                        ${cupSvg}
+                    </div>
+                    <div class="card-front">
+                        <div class="match-badge">✔</div>
+                        <div class="card-emoji">${drink.emoji}</div>
+                        <div class="card-name">${drink.name}</div>
+                    </div>
+                </div>
+            `;
+
+            cardEl.addEventListener('click', flipCard);
+            boardElement.appendChild(cardEl);
+        });
+    }
+
+    function flipCard() {
+        if (lockBoard) return;
+        if (this === firstCard) return; // Prevent double click on same card
+
+        this.classList.add('flipped');
+
+        if (!hasFlippedCard) {
+            // First click
+            hasFlippedCard = true;
+            firstCard = this;
+            return;
+        }
+
+        // Second click
+        secondCard = this;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+
+        if (isMatch) {
+            disableCards();
+        } else {
+            unflipCards();
+        }
+    }
+
+    function disableCards() {
+        // Match found
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+
+        // Add matched class for checkmark animation
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+
+        matchesFound++;
+        scoreTextElement.innerText = `${matchesFound}/3`;
+
+        resetBoard();
+
+        // Check win condition
+        if (matchesFound === 3) {
+            setTimeout(() => {
+                showResult();
+            }, 800);
+        }
+    }
+
+    function unflipCards() {
+        // No match, flip back after delay
+        lockBoard = true;
+
+        setTimeout(() => {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [hasFlippedCard, lockBoard] = [false, false];
+        [firstCard, secondCard] = [null, null];
+    }
+
+    function showResult() {
+        screenResult.classList.add('active');
+    }
+
+</script>
+
+</body>
+</html>

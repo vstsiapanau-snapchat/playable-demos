@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Match Meals, Win Big</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            /* Deep McDonald's Red Gradient */
+            background: radial-gradient(circle at top right, #9e0b0f 0%, #5a0002 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Subtle Background Arches Pattern */
+        .ad-container::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background-image:
+                radial-gradient(circle at center, rgba(255,255,255,0.03) 0%, transparent 50%),
+                repeating-radial-gradient(circle at center, transparent, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 80px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 10;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: #da291c;
+            color: #ffc72c;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: 900;
+            line-height: 1;
+            border: 2px solid #ffc72c;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .score-pill {
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        /* Start Screen */
+        #screen-start {
+            background: #5a0002;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .start-logo {
+            width: 80px;
+            height: 80px;
+            background: #da291c;
+            color: #ffc72c;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 3px solid #ffc72c;
+        }
+
+        .start-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .start-subtitle {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .start-loading {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        /* Game Board Area */
+        #screen-game {
+            top: 65px; /* Push down below header */
+            height: calc(100% - 65px);
+            padding: 20px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%;
+            max-height: 520px;
+        }
+
+        /* Cards */
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner,
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .card-back {
+            background: #da291c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* The large "M" on the back of the cards */
+        .card-back::after {
+            content: 'M';
+            font-size: 60px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .card-front {
+            background: #ffffff;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #333;
+            position: relative;
+        }
+
+        .card-emoji {
+            font-size: 60px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.2;
+            color: #000;
+        }
+
+        /* Match Checkmark Badge */
+        .match-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: #da291c;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition-delay: 0.3s;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .card.matched .match-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Result Screen */
+        #screen-result {
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 15;
+        }
+
+        .result-card {
+            background: #f4f4f4;
+            color: #333;
+            width: 100%;
+            max-width: 320px;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 70px;
+            margin-bottom: 15px;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #000;
+            margin-bottom: 10px;
+        }
+
+        .result-desc {
+            font-size: 16px;
+            color: #444;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .play-again-btn {
+            background: transparent;
+            border: 2px solid #000;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #000;
+            transition: all 0.2s;
+        }
+
+        .play-again-btn:active {
+            background: rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="ad-container">
+
+    <!-- Start Screen (Loading Overlay) -->
+    <div id="screen-start" class="screen active">
+        <div class="start-logo">M</div>
+        <h2 class="start-title">McDonald's</h2>
+        <p class="start-subtitle">Match & save $5</p>
+        <p class="start-loading">Get ready to play...</p>
+    </div>
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">M</div>
+            <div class="brand-text-wrapper">
+                <h1>McDonald's - Ad</h1>
+                <p>Match meals, win big.</p>
+            </div>
+        </div>
+        <div class="score-pill">
+            <span style="opacity: 0.8;">🍟</span> <span id="score-text">0/3</span>
+        </div>
+    </header>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+        <div class="game-board" id="board">
+            <!-- Cards generated by JS -->
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="result-card">
+            <div class="result-image">🎉</div>
+            <h2 class="result-title">You Matched!</h2>
+            <p class="result-desc">You've unlocked<br>$5 off your next<br>McDonald's order!</p>
+            <button class="play-again-btn" onclick="initGame()">↺ Play Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Menu Item Data
+    const menuItems = [
+        { id: 'fries', emoji: '🍟', name: 'Fries' },
+        { id: 'softserve', emoji: '🍦', name: 'Soft Serve' },
+        { id: 'bigmac', emoji: '🍔', name: 'Big Mac' }
+    ];
+
+    // Game State
+    let cards = [];
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    let matchesFound = 0;
+
+    const boardElement = document.getElementById('board');
+    const scoreTextElement = document.getElementById('score-text');
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenResult = document.getElementById('screen-result');
+
+    // Initial Loading Sequence (Simulates ad startup)
+    setTimeout(() => {
+        screenStart.classList.remove('active');
+        screenGame.classList.add('active');
+        initGame();
+    }, 2500);
+
+    function initGame() {
+        // Reset state
+        hasFlippedCard = false;
+        lockBoard = false;
+        firstCard = null;
+        secondCard = null;
+        matchesFound = 0;
+        scoreTextElement.innerText = '0/3';
+
+        // Ensure result screen is hidden
+        screenResult.classList.remove('active');
+
+        // Create pairs and shuffle the deck
+        cards = [...menuItems, ...menuItems];
+        cards.sort(() => Math.random() - 0.5);
+
+        // Build DOM elements for cards
+        boardElement.innerHTML = '';
+        cards.forEach((item) => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            cardEl.dataset.id = item.id;
+
+            cardEl.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back"></div>
+                    <div class="card-front">
+                        <div class="match-badge">✔</div>
+                        <div class="card-emoji">${item.emoji}</div>
+                        <div class="card-name">${item.name}</div>
+                    </div>
+                </div>
+            `;
+
+            cardEl.addEventListener('click', flipCard);
+            boardElement.appendChild(cardEl);
+        });
+    }
+
+    function flipCard() {
+        // Prevent flipping if board is locked or clicking the already flipped card
+        if (lockBoard) return;
+        if (this === firstCard) return;
+
+        this.classList.add('flipped');
+
+        if (!hasFlippedCard) {
+            // First click
+            hasFlippedCard = true;
+            firstCard = this;
+            return;
+        }
+
+        // Second click
+        secondCard = this;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+
+        if (isMatch) {
+            disableCards();
+        } else {
+            unflipCards();
+        }
+    }
+
+    function disableCards() {
+        // Match found!
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+
+        // Add matched class to trigger the checkmark pop animation
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+
+        // Update Score
+        matchesFound++;
+        scoreTextElement.innerText = `${matchesFound}/3`;
+
+        resetBoard();
+
+        // Check for Win
+        if (matchesFound === 3) {
+            setTimeout(() => {
+                showResult();
+            }, 800);
+        }
+    }
+
+    function unflipCards() {
+        // No match. Lock board, wait, then flip back
+        lockBoard = true;
+
+        setTimeout(() => {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [hasFlippedCard, lockBoard] = [false, false];
+        [firstCard, secondCard] = [null, null];
+    }
+
+    function showResult() {
+        screenResult.classList.add('active');
+    }
+
+</script>
+
+</body>
+</html>

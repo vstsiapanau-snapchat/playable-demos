@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Discover Your Trending Drink</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            /* Starbucks Green Gradient */
+            background: radial-gradient(circle at center, #006241 0%, #1e3932 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Subtle Background Pattern (Simulated with repeating linear gradient) */
+        .ad-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 10;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #006241;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .step-indicator {
+            font-size: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 80px 20px 40px 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .small-title {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 40px;
+        }
+
+        /* Options / Buttons */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.selected {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .emoji-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .checkmark {
+            position: absolute;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #006241;
+            font-size: 14px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .option-btn.selected .checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Pagination Dots */
+        .pagination {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 25px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .dot.active {
+            background: white;
+        }
+
+        /* Loading Screen */
+        .loading-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Ripple Animation for Loading */
+        .loading-ripple {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            margin-bottom: 40px;
+        }
+
+        .loading-ripple::before, .loading-ripple::after {
+            content: '';
+            position: absolute;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: ripple 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+        }
+
+        .loading-ripple::after {
+            animation-delay: -1s;
+        }
+
+        @keyframes ripple {
+            0% { top: 35px; left: 35px; width: 10px; height: 10px; opacity: 1; }
+            100% { top: -40px; left: -40px; width: 160px; height: 160px; opacity: 0; }
+        }
+
+        .loading-title {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtitle {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Result Screen */
+        .result-screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .result-image-box {
+            background: #0d281d;
+            border-radius: 20px;
+            width: 100%;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 120px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .result-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .result-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .retake-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .retake-btn:active {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-container">
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">☕</div>
+            <div class="brand-text-wrapper">
+                <h1>Starbucks - Ad</h1>
+                <p>Discover your trending drink</p>
+            </div>
+        </div>
+        <div class="step-indicator" id="step-text">1 of 2</div>
+    </header>
+
+    <!-- Question 1 -->
+    <div id="screen-q1" class="screen active">
+        <div class="small-title">FIND YOUR TRENDING DRINK ☕</div>
+        <h2 class="main-title">What's your vibe right now?</h2>
+
+        <div class="options-container">
+            <div class="option-btn" onclick="selectQ1('chill', this)">
+                <span class="emoji-icon">🌿</span> Something chill
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectQ1('choco', this)">
+                <span class="emoji-icon">🍫</span> Chocolate lover
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectQ1('fruity', this)">
+                <span class="emoji-icon">🎉</span> Fun & fruity
+                <div class="checkmark">✔</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 2 (Options populated dynamically) -->
+    <div id="screen-q2" class="screen">
+        <h2 class="main-title" style="margin-top: 30px;">What sounds amazing?</h2>
+        <div class="options-container" id="q2-options-container">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="screen-loading" class="screen">
+        <div class="loading-content">
+            <div class="loading-ripple">☕</div>
+            <h2 class="loading-title">Finding your<br>perfect drink...</h2>
+            <p class="loading-subtitle">✨ Almost there... ✨</p>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="small-title" style="margin-top: 0;">YOUR TRENDING DRINK</div>
+        <div class="result-screen-content">
+            <div class="result-image-box" id="res-img">🟣</div>
+            <h2 class="result-title" id="res-title">Iced Ube Coconut Macchiato</h2>
+            <p class="result-desc" id="res-desc">A tropical twist with creamy ube and coconut milk, layered over bold espresso for a vibrant purple sip.</p>
+            <button class="retake-btn" onclick="resetQuiz()">↺ Retake Quiz</button>
+        </div>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="pagination" id="pagination-dots">
+        <div class="dot active" id="dot-1"></div>
+        <div class="dot" id="dot-2"></div>
+    </div>
+
+</div>
+
+<script>
+    // State to hold answers
+    let answers = {
+        q1: null,
+        q2: null
+    };
+
+    // Database for dynamic Question 2 options
+    const q2Data = {
+        'chill': [
+            { id: 'ube', emoji: '🟣', text: 'Ube & coconut' },
+            { id: 'toasty', emoji: '🥥', text: 'Toasty coconut' },
+            { id: 'lavender', emoji: '💜', text: 'Lavender & matcha' }
+        ],
+        'choco': [
+            { id: 'mocha', emoji: '☕', text: 'Classic Mocha' },
+            { id: 'white', emoji: '🤍', text: 'White Chocolate' }
+        ],
+        'fruity': [
+            { id: 'blue', emoji: '💙', text: 'Blue blast' },
+            { id: 'pink', emoji: '💗', text: 'Pink vibes' }
+        ]
+    };
+
+    // Database of outcomes mimicking the video's logic
+    const resultsDB = {
+        'chill_ube': {
+            img: '🟣🥤',
+            title: 'Iced Ube Coconut Macchiato',
+            desc: 'A tropical twist with creamy ube and coconut milk, layered over bold espresso for a vibrant purple sip.'
+        },
+        'fruity_pink': {
+            img: '💗🥤',
+            title: 'Pink Cannon Ball Drink',
+            desc: 'The pink twist on the Cannon Ball, with fruity berry flavors and a vibrant, eye-catching hue.'
+        },
+        'chill_lavender': {
+            img: '💜🍵',
+            title: 'Iced Lavender Oatmilk Matcha',
+            desc: 'Sweet and subtle floral notes of lavender blended perfectly with earthy matcha and creamy oatmilk.'
+        },
+        'choco_mocha': {
+            img: '🍫🥤',
+            title: 'Iced Chocolate Almondmilk',
+            desc: 'Rich chocolate notes mixed perfectly with espresso and creamy almondmilk for the ultimate treat.'
+        },
+        'fruity_blue': {
+            img: '💙🧊',
+            title: 'Blueberry Acai Refresher',
+            desc: 'A bright, crisp blend of blueberry and acai notes shaken with ice to keep you feeling refreshed.'
+        },
+        // Fallback for any other combo
+        'default': {
+            img: '🌿☕',
+            title: 'Custom Trending Drink',
+            desc: 'Your perfect Starbucks match, customized with the exact flavor profile you are craving today.'
+        }
+    };
+
+    function selectQ1(value, element) {
+        if (element.classList.contains('selected')) return;
+
+        // Visual selection
+        const siblings = element.parentElement.children;
+        for (let el of siblings) el.classList.remove('selected');
+        element.classList.add('selected');
+
+        answers.q1 = value;
+
+        // Generate Q2 dynamically based on selection
+        generateQ2Options(value);
+
+        // Transition
+        setTimeout(() => {
+            goToScreen('screen-q2');
+            document.getElementById('step-text').innerText = '2 of 2';
+            document.getElementById('dot-1').classList.remove('active');
+            document.getElementById('dot-2').classList.add('active');
+        }, 600);
+    }
+
+    function generateQ2Options(q1Value) {
+        const container = document.getElementById('q2-options-container');
+        container.innerHTML = ''; // Clear previous
+
+        const options = q2Data[q1Value] || q2Data['chill'];
+
+        options.forEach(opt => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            btn.onclick = function() { selectQ2(opt.id, this); };
+            btn.innerHTML = `
+                <span class="emoji-icon">${opt.emoji}</span> ${opt.text}
+                <div class="checkmark">✔</div>
+            `;
+            container.appendChild(btn);
+        });
+    }
+
+    function selectQ2(value, element) {
+        if (element.classList.contains('selected')) return;
+
+        // Visual selection
+        const siblings = element.parentElement.children;
+        for (let el of siblings) el.classList.remove('selected');
+        element.classList.add('selected');
+
+        answers.q2 = value;
+
+        // Transition to loading
+        setTimeout(() => {
+            goToLoading();
+        }, 600);
+    }
+
+    function goToScreen(screenId) {
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToLoading() {
+        // Hide header and pagination
+        document.getElementById('main-header').classList.add('hidden');
+        document.getElementById('pagination-dots').classList.add('hidden');
+
+        goToScreen('screen-loading');
+
+        // Simulate network/calculation delay
+        setTimeout(() => {
+            showResult();
+        }, 2000);
+    }
+
+    function showResult() {
+        const key = `${answers.q1}_${answers.q2}`;
+        const result = resultsDB[key] || resultsDB['default'];
+
+        document.getElementById('res-img').innerText = result.img;
+        document.getElementById('res-title').innerText = result.title;
+        document.getElementById('res-desc').innerText = result.desc;
+
+        goToScreen('screen-result');
+    }
+
+    function resetQuiz() {
+        answers = { q1: null, q2: null };
+
+        // Reset Q1 visual state
+        document.querySelectorAll('#screen-q1 .option-btn').forEach(btn => btn.classList.remove('selected'));
+
+        // Reset Header & Pagination
+        document.getElementById('main-header').classList.remove('hidden');
+        document.getElementById('pagination-dots').classList.remove('hidden');
+        document.getElementById('step-text').innerText = '1 of 2';
+        document.getElementById('dot-1').classList.add('active');
+        document.getElementById('dot-2').classList.remove('active');
+
+        goToScreen('screen-q1');
+    }
+</script>
+
+</body>
+</html>

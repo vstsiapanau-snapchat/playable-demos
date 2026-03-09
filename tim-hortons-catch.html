@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Catch Treats, Win Rewards</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Prevent scrolling while playing */
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            background: #d81a2a;
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 20;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%);
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #d81a2a;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .score-pill {
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 10;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Start Screen */
+        #screen-start {
+            background: radial-gradient(circle at center, #5a000a 0%, #2a0003 100%);
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 15;
+        }
+
+        .start-logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            color: #d81a2a;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 22px;
+            text-align: center;
+            line-height: 1;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .start-title {
+            font-size: 24px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .start-subtitle {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .start-loading {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 50px;
+        }
+
+        .start-box {
+            font-size: 60px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Game Screen */
+        #screen-game {
+            background: radial-gradient(circle at center, #e32636 0%, #a6101e 100%);
+            z-index: 5;
+        }
+
+        /* Tilt Hint */
+        .tilt-hint {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+            opacity: 1;
+            transition: opacity 1s ease;
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        /* Player Box */
+        .player-box {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            width: 80px;
+            height: 50px;
+            background: #a90011;
+            border: 2px solid #ff4d5a;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 5px;
+            font-size: 26px;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.3), inset 0 -10px 15px rgba(0,0,0,0.2);
+            z-index: 10;
+            will-change: left;
+        }
+
+        .player-box::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -2px;
+            right: -2px;
+            height: 10px;
+            border: 2px solid #ff4d5a;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* Falling Items */
+        .falling-item {
+            position: absolute;
+            font-size: 35px;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+            z-index: 6;
+            will-change: top;
+        }
+
+        /* +1 / -1 Float Text */
+        .float-text {
+            position: absolute;
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 11;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        .float-text.negative {
+            color: #ffcccc;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
+        }
+
+        /* Result Screen */
+        #screen-result {
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 30;
+        }
+
+        .small-title {
+            text-align: center;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .result-card {
+            background: white;
+            color: #333;
+            width: 100%;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 90px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .result-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .play-again-btn {
+            background: transparent;
+            border: 1px solid #ccc;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .play-again-btn:active {
+            background: #f0f0f0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-container" id="game-container">
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">Tim<br>Hortons</div>
+            <div class="brand-text-wrapper">
+                <h1>Tim Hortons - Ad</h1>
+                <p>Catch treats, win rewards.</p>
+            </div>
+        </div>
+        <div class="score-pill" id="score-pill">
+            <span id="score-text">⭐ 0/6</span>
+        </div>
+    </header>
+
+    <!-- Start Screen -->
+    <div id="screen-start" class="screen active">
+        <div class="start-logo">Tim<br>Hortons</div>
+        <h2 class="start-title">Tim Hortons</h2>
+        <p class="start-subtitle">Play & save $5</p>
+        <p class="start-loading">Get ready to play...</p>
+        <div class="start-box">🍩</div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen">
+        <div class="tilt-hint" id="tilt-hint">📱 Tilt your phone to catch treats!</div>
+        <div class="player-box" id="player">🍩</div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="small-title">YOU WON!</div>
+        <div class="result-card">
+            <div class="result-image">🍩</div>
+            <h2 class="result-title">FREE Donut!</h2>
+            <p class="result-desc">You've unlocked<br>$5 off your next Tim Hortons order!</p>
+            <button class="play-again-btn" onclick="resetGame()">↺ Play Again</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Game Configuration
+    const TARGET_SCORE = 6;
+    const GOOD_ITEMS = ['🍩', '☕', '⭐', '🎁', '🧁', '🥯'];
+    const BAD_ITEMS = ['💣'];
+
+    // State
+    let score = 0;
+    let isPlaying = false;
+    let gameLoop;
+    let spawnInterval;
+    let activeItems = [];
+
+    // DOM Elements
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenResult = document.getElementById('screen-result');
+    const scorePill = document.getElementById('score-pill');
+    const scoreText = document.getElementById('score-text');
+    const tiltHint = document.getElementById('tilt-hint');
+
+    // Player position setup
+    let playerX = container.clientWidth / 2;
+    const playerWidth = 80;
+
+    // Initialization Sequence
+    setTimeout(() => {
+        startTransition();
+    }, 2500);
+
+    function startTransition() {
+        screenStart.classList.remove('active');
+        screenGame.classList.add('active');
+        scorePill.style.opacity = '1';
+
+        // Give player a moment to read the tilt text
+        setTimeout(() => {
+            startGame();
+            // Fade out the hint after a few seconds
+            setTimeout(() => {
+                tiltHint.style.opacity = '0';
+            }, 3000);
+        }, 500);
+    }
+
+    function startGame() {
+        score = 0;
+        updateScoreUI();
+        isPlaying = true;
+        activeItems = [];
+
+        // Clear previous items if any
+        document.querySelectorAll('.falling-item').forEach(el => el.remove());
+
+        // Controls
+        setupControls();
+
+        // Game loops
+        spawnInterval = setInterval(spawnItem, 700);
+        gameLoop = requestAnimationFrame(update);
+    }
+
+    function spawnItem() {
+        if (!isPlaying) return;
+
+        const isBad = Math.random() > 0.8; // 20% chance for a bomb
+        const charSet = isBad ? BAD_ITEMS : GOOD_ITEMS;
+        const emoji = charSet[Math.floor(Math.random() * charSet.length)];
+
+        const itemEl = document.createElement('div');
+        itemEl.classList.add('falling-item');
+        itemEl.innerText = emoji;
+        itemEl.dataset.type = isBad ? 'bad' : 'good';
+
+        // Random X position ensuring it stays within bounds
+        const startX = Math.random() * (container.clientWidth - 40);
+        itemEl.style.left = `${startX}px`;
+        itemEl.style.top = `-50px`;
+
+        screenGame.appendChild(itemEl);
+
+        activeItems.push({
+            el: itemEl,
+            y: -50,
+            x: startX,
+            speed: 3 + Math.random() * 2 // Randomize fall speed
+        });
+    }
+
+    function update() {
+        if (!isPlaying) return;
+
+        const playerRect = player.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        // Iterate backwards to safely remove items from the array while looping
+        for (let i = activeItems.length - 1; i >= 0; i--) {
+            let item = activeItems[i];
+            item.y += item.speed;
+            item.el.style.top = `${item.y}px`;
+
+            // Check collision using bounding rects relative to viewport
+            const itemRect = item.el.getBoundingClientRect();
+
+            // Basic AABB (Axis-Aligned Bounding Box) Collision Detection
+            if (
+                itemRect.left < playerRect.right &&
+                itemRect.right > playerRect.left &&
+                itemRect.bottom > playerRect.top + 10 && // Give a bit of buffer at the top
+                itemRect.top < playerRect.bottom
+            ) {
+                // Caught!
+                handleCatch(item, i);
+                continue;
+            }
+
+            // Missed (fell off screen)
+            if (item.y > containerRect.height) {
+                item.el.remove();
+                activeItems.splice(i, 1);
+            }
+        }
+
+        // Keep updating until game is over
+        gameLoop = requestAnimationFrame(update);
+    }
+
+    function handleCatch(item, index) {
+        // FIXED: Checked `item.el.dataset.type` instead of `item.dataset.type`
+        if (item.el.dataset.type === 'good') {
+            score++;
+            showFloatText('+1', item.x, player.offsetTop - 30, false);
+        } else {
+            // Caught a bomb
+            score = Math.max(0, score - 1);
+            showFloatText('-1', item.x, player.offsetTop - 30, true);
+        }
+
+        updateScoreUI();
+
+        // Remove item from DOM and Active Array
+        item.el.remove();
+        activeItems.splice(index, 1);
+
+        // Check Win
+        if (score >= TARGET_SCORE) {
+            triggerWin();
+        }
+    }
+
+    function showFloatText(text, x, y, isNegative) {
+        const floatEl = document.createElement('div');
+        floatEl.classList.add('float-text');
+        if (isNegative) floatEl.classList.add('negative');
+        floatEl.innerText = text;
+        floatEl.style.left = `${x + 10}px`;
+        floatEl.style.top = `${y}px`;
+        screenGame.appendChild(floatEl);
+
+        setTimeout(() => {
+            floatEl.remove();
+        }, 800);
+    }
+
+    function updateScoreUI() {
+        scoreText.innerText = `⭐ ${score}/${TARGET_SCORE}`;
+    }
+
+    function triggerWin() {
+        isPlaying = false;
+        cancelAnimationFrame(gameLoop);
+        clearInterval(spawnInterval);
+
+        setTimeout(() => {
+            screenGame.classList.remove('active');
+            scorePill.classList.add('hidden');
+            screenResult.classList.add('active');
+        }, 500);
+    }
+
+    function resetGame() {
+        screenResult.classList.remove('active');
+        scorePill.classList.remove('hidden');
+        screenGame.classList.add('active');
+        tiltHint.style.opacity = '1';
+
+        setTimeout(() => {
+            tiltHint.style.opacity = '0';
+        }, 3000);
+
+        startGame();
+    }
+
+    // --- CONTROLS ---
+
+    function setupControls() {
+        // Touch / Mouse Dragging
+        const updatePlayerX = (clientX) => {
+            const containerRect = container.getBoundingClientRect();
+            // Map clientX relative to the container
+            let x = clientX - containerRect.left;
+
+            // Clamp value
+            if (x < playerWidth / 2) x = playerWidth / 2;
+            if (x > containerRect.width - playerWidth / 2) x = containerRect.width - playerWidth / 2;
+
+            playerX = x;
+            player.style.left = `${playerX}px`;
+        };
+
+        // Touch Events
+        container.addEventListener('touchmove', (e) => {
+            if(!isPlaying) return;
+            e.preventDefault(); // Prevent scrolling
+            updatePlayerX(e.touches[0].clientX);
+        }, { passive: false });
+
+        // Mouse Events
+        let isMouseDown = false;
+        container.addEventListener('mousedown', (e) => { isMouseDown = true; updatePlayerX(e.clientX); });
+        window.addEventListener('mouseup', () => { isMouseDown = false; });
+        container.addEventListener('mousemove', (e) => {
+            if (isMouseDown && isPlaying) updatePlayerX(e.clientX);
+        });
+
+        // Device Orientation (Tilt)
+        window.addEventListener('deviceorientation', (e) => {
+            if (!isPlaying || e.gamma === null) return;
+
+            // Gamma is the left-to-right tilt in degrees, where right is positive
+            let tilt = e.gamma;
+
+            // Constrain tilt to a practical range (-30 to 30)
+            if (tilt > 30) tilt = 30;
+            if (tilt < -30) tilt = -30;
+
+            // Map tilt (-30 to 30) to screen width
+            const containerWidth = container.clientWidth;
+            // Base X is center, adjust based on tilt percentage
+            let newX = (containerWidth / 2) + ((tilt / 30) * (containerWidth / 2));
+
+            // Clamp
+            if (newX < playerWidth / 2) newX = playerWidth / 2;
+            if (newX > containerWidth - playerWidth / 2) newX = containerWidth - playerWidth / 2;
+
+            playerX = newX;
+            player.style.left = `${playerX}px`;
+        });
+    }
+</script>
+
+</body>
+</html>

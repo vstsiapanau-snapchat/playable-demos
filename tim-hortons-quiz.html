@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Tims Match</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            background: radial-gradient(circle at center, #d81a2a 0%, #9e0b16 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 10;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #d81a2a;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .step-indicator {
+            font-size: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 80px 20px 40px 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        .small-title {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            margin-top: 40px;
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 40px;
+        }
+
+        /* Options / Buttons */
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.selected {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: white;
+        }
+
+        .emoji-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .checkmark {
+            position: absolute;
+            right: 20px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #d81a2a;
+            font-size: 14px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .option-btn.selected .checkmark {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Pagination Dots */
+        .pagination {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 25px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        .dot.active {
+            background: white;
+        }
+
+        /* Loading Screen */
+        .loading-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .loading-icon {
+            font-size: 60px;
+            background: rgba(255,255,255,0.1);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        .loading-title {
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtitle {
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Result Screen */
+        .result-screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .result-card {
+            background: white;
+            color: #333;
+            width: 100%;
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 90px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+        }
+
+        .result-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .result-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        .retake-btn {
+            background: transparent;
+            border: 1px solid #ccc;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .retake-btn:active {
+            background: #f0f0f0;
+        }
+
+        /* Hide elements dynamically */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-container">
+
+    <!-- Persistent Header (Shown on Q1 & Q2) -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">Tim<br>Hortons</div>
+            <div class="brand-text-wrapper">
+                <h1>Tim Hortons - Ad</h1>
+                <p>Find your Tims match</p>
+            </div>
+        </div>
+        <div class="step-indicator" id="step-text">1 of 2</div>
+    </header>
+
+    <!-- Question 1 -->
+    <div id="screen-q1" class="screen active">
+        <div class="small-title">FIND YOUR TIMS MATCH ☕</div>
+        <h2 class="main-title">What's your energy right now?</h2>
+
+        <div class="options-container">
+            <div class="option-btn" onclick="selectOption('q1', 'morning', this)">
+                <span class="emoji-icon">☀️</span> Morning mode
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectOption('q1', 'pickmeup', this)">
+                <span class="emoji-icon">🥱</span> Need a pick-me-up
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectOption('q1', 'latenight', this)">
+                <span class="emoji-icon">🌙</span> Late night vibes
+                <div class="checkmark">✔</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question 2 -->
+    <div id="screen-q2" class="screen">
+        <h2 class="main-title" style="margin-top: 30px;">What sounds perfect?</h2>
+
+        <div class="options-container">
+            <div class="option-btn" onclick="selectOption('q2', 'warm', this)">
+                <span class="emoji-icon">☕</span> Warm & cozy
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectOption('q2', 'sweet', this)">
+                <span class="emoji-icon">🍩</span> Sweet & fun
+                <div class="checkmark">✔</div>
+            </div>
+            <div class="option-btn" onclick="selectOption('q2', 'combo', this)">
+                <span class="emoji-icon">📦</span> The full combo
+                <div class="checkmark">✔</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="screen-loading" class="screen">
+        <div class="loading-content">
+            <div class="loading-icon">☕</div>
+            <h2 class="loading-title">Finding your<br>perfect match...</h2>
+            <p class="loading-subtitle">✨ Almost there... ✨</p>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="small-title" style="margin-top: 0;">YOUR TIMS MATCH</div>
+        <div class="result-screen-content">
+            <div class="result-card">
+                <div class="result-image" id="res-img">🍩</div>
+                <h2 class="result-title" id="res-title">Sprinkle Donut & Hot Chocolate</h2>
+                <p class="result-desc" id="res-desc">Start your day with a smile — a colorful sprinkle donut and a rich, creamy hot chocolate.</p>
+                <button class="retake-btn" onclick="resetQuiz()">↺ Retake Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="pagination" id="pagination-dots">
+        <div class="dot active" id="dot-1"></div>
+        <div class="dot" id="dot-2"></div>
+    </div>
+
+</div>
+
+<script>
+    // State to hold answers
+    let answers = {
+        q1: null,
+        q2: null
+    };
+
+    // Database of outcomes mimicking the video's logic
+    const resultsDB = {
+        'morning_sweet': {
+            img: '🍩☕',
+            title: 'Sprinkle Donut<br>& Hot Chocolate',
+            desc: 'Start your day with a smile — a colorful sprinkle donut and a rich, creamy hot chocolate.'
+        },
+        'latenight_sweet': {
+            img: '🍩🍫',
+            title: 'Choco Dream Donut',
+            desc: 'Indulge in layers of chocolate on chocolate — a decadent donut that satisfies every late-night craving.'
+        },
+        // Fallback/Default generated matches for other combinations
+        'pickmeup_warm': {
+            img: '☕🥐',
+            title: 'French Vanilla<br>& Croissant',
+            desc: 'The ultimate afternoon comfort duo to give you that cozy, sweet burst of energy.'
+        },
+        'morning_combo': {
+            img: '🥯☕',
+            title: 'Farmers Breakfast Wrap<br>& Dark Roast',
+            desc: 'A hearty morning classic to power you through whatever the day brings.'
+        },
+        'default': {
+            img: '🥤🍩',
+            title: 'Iced Capp & Classic Donut',
+            desc: 'You cant go wrong with the absolute classics. Cool, sweet, and perfectly iconic.'
+        }
+    };
+
+    function selectOption(question, value, element) {
+        // Prevent multiple clicks while transitioning
+        if (element.classList.contains('selected')) return;
+
+        // Visual selection
+        const siblings = element.parentElement.children;
+        for (let el of siblings) {
+            el.classList.remove('selected');
+        }
+        element.classList.add('selected');
+
+        // Store answer
+        answers[question] = value;
+
+        // Transition delay to let user see the checkmark
+        setTimeout(() => {
+            if (question === 'q1') {
+                goToScreen('screen-q2');
+                document.getElementById('step-text').innerText = '2 of 2';
+                document.getElementById('dot-1').classList.remove('active');
+                document.getElementById('dot-2').classList.add('active');
+            } else if (question === 'q2') {
+                goToLoading();
+            }
+        }, 600);
+    }
+
+    function goToScreen(screenId) {
+        const screens = document.querySelectorAll('.screen');
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToLoading() {
+        // Hide header and pagination for loading/result screens
+        document.getElementById('main-header').classList.add('hidden');
+        document.getElementById('pagination-dots').classList.add('hidden');
+
+        goToScreen('screen-loading');
+
+        // Simulate network/calculation delay
+        setTimeout(() => {
+            showResult();
+        }, 2000);
+    }
+
+    function showResult() {
+        // Calculate result
+        const key = `${answers.q1}_${answers.q2}`;
+        const result = resultsDB[key] || resultsDB['default'];
+
+        // Populate result DOM
+        document.getElementById('res-img').innerText = result.img;
+        document.getElementById('res-title').innerHTML = result.title;
+        document.getElementById('res-desc').innerText = result.desc;
+
+        goToScreen('screen-result');
+    }
+
+    function resetQuiz() {
+        // Reset state
+        answers = { q1: null, q2: null };
+
+        // Reset DOM
+        document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+        document.getElementById('main-header').classList.remove('hidden');
+        document.getElementById('pagination-dots').classList.remove('hidden');
+        document.getElementById('step-text').innerText = '1 of 2';
+        document.getElementById('dot-1').classList.add('active');
+        document.getElementById('dot-2').classList.remove('active');
+
+        // Go back to start
+        goToScreen('screen-q1');
+    }
+</script>
+
+</body>
+</html>

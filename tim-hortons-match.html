@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Donuts, Win Treats</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Main Game Container */
+        .ad-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            max-height: 750px;
+            background: radial-gradient(circle at center, #8a000e 0%, #4a0006 100%);
+            position: relative;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* Top Header */
+        .ad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            z-index: 10;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 35px;
+            height: 35px;
+            background: white;
+            color: #d81a2a;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1;
+        }
+
+        .brand-text-wrapper h1 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .brand-text-wrapper p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .score-pill {
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0,0,0,0.4);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute;
+            top: 65px; /* Below header */
+            left: 0;
+            width: 100%;
+            height: calc(100% - 65px);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 5;
+        }
+
+        /* Game Board */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%;
+            max-height: 550px;
+            margin-top: 10px;
+        }
+
+        /* Cards */
+        .card {
+            perspective: 1000px;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner,
+        .card.matched .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .card-back {
+            background: #a90d1c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card-back::after {
+            content: 'T';
+            font-size: 40px;
+            font-weight: 900;
+            color: rgba(255,255,255,0.15);
+        }
+
+        .card-front {
+            background: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #333;
+            position: relative;
+        }
+
+        .card-emoji {
+            font-size: 50px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1));
+        }
+
+        .card-name {
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Match Checkmark Badge */
+        .match-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: #d81a2a;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            opacity: 0;
+            transform: scale(0);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition-delay: 0.2s;
+            z-index: 10;
+        }
+
+        .card.matched .match-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Result Screen */
+        .result-screen-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .small-title {
+            text-align: center;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .result-card {
+            background: white;
+            color: #333;
+            width: 100%;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-image {
+            font-size: 90px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .result-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .play-again-btn {
+            background: transparent;
+            border: 1px solid #ccc;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            transition: background 0.2s;
+        }
+
+        .play-again-btn:active {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-container">
+
+    <!-- Persistent Header -->
+    <header class="ad-header" id="main-header">
+        <div class="brand-info">
+            <div class="logo">Tim<br>Hortons</div>
+            <div class="brand-text-wrapper">
+                <h1>Tim Hortons - Ad</h1>
+                <p>Match donuts, win treats.</p>
+            </div>
+        </div>
+        <div class="score-pill">
+            <span>🍩</span> <span id="score-text">0/3</span>
+        </div>
+    </header>
+
+    <!-- Game Screen -->
+    <div id="screen-game" class="screen active">
+        <div class="game-board" id="board">
+            <!-- Cards generated by JS -->
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="screen-result" class="screen">
+        <div class="result-screen-content">
+            <div class="small-title">YOU MATCHED!</div>
+            <div class="result-card">
+                <div class="result-image">🍩</div>
+                <h2 class="result-title">FREE Donut!</h2>
+                <p class="result-desc">You've unlocked<br>$5 off your next Tim Hortons order!</p>
+                <button class="play-again-btn" onclick="initGame()">↺ Play Again</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const donuts = [
+        { id: 'sprinkle', emoji: '🍩', name: 'Sprinkle Donut' },
+        { id: 'choco', emoji: '🍫', name: 'Choco Dream' },
+        { id: 'cruller', emoji: '🥯', name: 'Honey Cruller' }
+    ];
+
+    let cards = [];
+    let hasFlippedCard = false;
+    let lockBoard = false;
+    let firstCard, secondCard;
+    let matchesFound = 0;
+
+    const boardElement = document.getElementById('board');
+    const scoreTextElement = document.getElementById('score-text');
+
+    function initGame() {
+        // Reset state
+        hasFlippedCard = false;
+        lockBoard = false;
+        firstCard = null;
+        secondCard = null;
+        matchesFound = 0;
+        scoreTextElement.innerText = '0/3';
+
+        // Hide result, show game
+        document.getElementById('screen-result').classList.remove('active');
+        document.getElementById('screen-game').classList.add('active');
+
+        // Create pairs and shuffle
+        cards = [...donuts, ...donuts];
+        cards.sort(() => Math.random() - 0.5);
+
+        // Build DOM
+        boardElement.innerHTML = '';
+        cards.forEach((donut, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            cardEl.dataset.id = donut.id;
+            cardEl.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-back"></div>
+                    <div class="card-front">
+                        <div class="match-badge">✔</div>
+                        <div class="card-emoji">${donut.emoji}</div>
+                        <div class="card-name">${donut.name}</div>
+                    </div>
+                </div>
+            `;
+            cardEl.addEventListener('click', flipCard);
+            boardElement.appendChild(cardEl);
+        });
+    }
+
+    function flipCard() {
+        if (lockBoard) return;
+        if (this === firstCard) return;
+
+        this.classList.add('flipped');
+
+        if (!hasFlippedCard) {
+            // First click
+            hasFlippedCard = true;
+            firstCard = this;
+            return;
+        }
+
+        // Second click
+        secondCard = this;
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        let isMatch = firstCard.dataset.id === secondCard.dataset.id;
+
+        if (isMatch) {
+            disableCards();
+        } else {
+            unflipCards();
+        }
+    }
+
+    function disableCards() {
+        // Match found
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+
+        // Add matched class for checkmark animation
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+
+        matchesFound++;
+        scoreTextElement.innerText = `${matchesFound}/3`;
+
+        resetBoard();
+
+        // Check win condition
+        if (matchesFound === 3) {
+            setTimeout(() => {
+                showResult();
+            }, 800);
+        }
+    }
+
+    function unflipCards() {
+        // No match, flip back after delay
+        lockBoard = true;
+
+        setTimeout(() => {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [hasFlippedCard, lockBoard] = [false, false];
+        [firstCard, secondCard] = [null, null];
+    }
+
+    function showResult() {
+        document.getElementById('screen-game').classList.remove('active');
+        document.getElementById('screen-result').classList.add('active');
+    }
+
+    // Start game on load
+    initGame();
+</script>
+
+</body>
+</html>
