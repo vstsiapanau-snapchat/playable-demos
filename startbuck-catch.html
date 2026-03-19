@@ -306,16 +306,42 @@
     const TILT_SMOOTHING = 0.08;
     player.style.transform = `translateX(${playerX}px) translateX(-50%)`;
 
-    // Automatically start game
-    window.onload = () => {
-        setupControls();
-        startGame();
-
-        // Fade out hint
+    function beginCountdown() {
         setTimeout(() => {
-            tiltHint.style.opacity = '0';
-        }, 3500);
-    };
+            setupControls();
+            startGame();
+
+            setTimeout(() => {
+                tiltHint.style.opacity = '0';
+            }, 3500);
+        }, 1200);
+    }
+
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
+    }
 
     function startGame() {
         score = 0;

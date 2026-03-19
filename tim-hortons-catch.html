@@ -373,24 +373,45 @@
     const TILT_SMOOTHING = 0.08;
     player.style.transform = `translateX(${playerX}px) translateX(-50%)`;
 
-    // Initialization Sequence
-    setTimeout(() => {
-        startTransition();
-    }, 2500);
-
-    function startTransition() {
-        screenStart.classList.remove('active');
-        screenGame.classList.add('active');
-        scorePill.style.opacity = '1';
-
-        // Give player a moment to read the tilt text
+    function beginCountdown() {
         setTimeout(() => {
-            startGame();
-            // Fade out the hint after a few seconds
+            screenStart.classList.remove('active');
+            screenGame.classList.add('active');
+            scorePill.style.opacity = '1';
+
             setTimeout(() => {
-                tiltHint.style.opacity = '0';
-            }, 3000);
-        }, 500);
+                startGame();
+                setTimeout(() => {
+                    tiltHint.style.opacity = '0';
+                }, 3000);
+            }, 500);
+        }, 1200);
+    }
+
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
     }
 
     function startGame() {

@@ -374,8 +374,7 @@
     const TILT_SMOOTHING = 0.08;
     player.style.transform = `translateX(${playerX}px) translateX(-50%)`;
 
-    // Initial Start Sequence
-    window.onload = () => {
+    function beginCountdown() {
         setTimeout(() => {
             screenStart.classList.remove('active');
             screenGame.classList.add('active');
@@ -384,13 +383,40 @@
                 setupControls();
                 startGame();
 
-                // Fade out hint after playing starts
                 setTimeout(() => {
                     tiltHint.style.opacity = '0';
                 }, 3500);
             }, 300);
-        }, 2500); // Intro screen delay
-    };
+        }, 1200);
+    }
+
+    // MRAID Integration
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        // Fallback for non-MRAID environments (e.g. desktop browser testing)
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
+    }
 
     function startGame() {
         score = 0;

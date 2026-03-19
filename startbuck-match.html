@@ -372,12 +372,37 @@
     const screenGame = document.getElementById('screen-game');
     const screenResult = document.getElementById('screen-result');
 
-    // Initial Loading Sequence
-    setTimeout(() => {
+    function beginCountdown() {
         screenStart.classList.remove('active');
         screenGame.classList.add('active');
         initGame();
-    }, 2500);
+    }
+
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
+    }
 
     function initGame() {
         // Reset state

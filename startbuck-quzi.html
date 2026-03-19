@@ -309,7 +309,7 @@
     <div class="step-indicator" id="step-text">1 of 2</div>
 
     <!-- Question 1 -->
-    <div id="screen-q1" class="screen active">
+    <div id="screen-q1" class="screen">
         <div class="small-title">FIND YOUR TRENDING DRINK ☕</div>
         <h2 class="main-title">What's your vibe right now?</h2>
 
@@ -524,6 +524,36 @@
         document.getElementById('dot-2').classList.remove('active');
 
         goToScreen('screen-q1');
+    }
+
+    function beginCountdown() {
+        goToScreen('screen-q1');
+    }
+
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
     }
 </script>
 

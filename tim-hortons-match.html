@@ -411,8 +411,35 @@
         document.getElementById('screen-result').classList.add('active');
     }
 
-    // Start game on load
-    initGame();
+    function beginCountdown() {
+        initGame();
+    }
+
+    function onViewable(viewable) {
+        if (viewable) {
+            beginCountdown();
+        }
+    }
+
+    function initMRAID() {
+        if (mraid.isViewable()) {
+            beginCountdown();
+        } else {
+            mraid.addEventListener('viewableChange', onViewable);
+        }
+    }
+
+    if (typeof mraid !== 'undefined') {
+        if (mraid.getState() === 'loading') {
+            mraid.addEventListener('ready', initMRAID);
+        } else {
+            initMRAID();
+        }
+    } else {
+        window.onload = () => {
+            setTimeout(beginCountdown, 2500);
+        };
+    }
 </script>
 
 </body>
