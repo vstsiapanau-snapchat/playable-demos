@@ -58,7 +58,7 @@
 
         .score-pill {
             position: absolute;
-            top: clamp(8px, 3vmin, 15px);
+            top: clamp(60px, 15vmin, 90px);
             right: clamp(10px, 4vmin, 20px);
             z-index: 20;
             font-size: clamp(11px, 3.5vmin, 14px);
@@ -396,28 +396,39 @@
     }
 
     // MRAID Integration
-    function onViewable(viewable) {
-        if (viewable) {
-            beginCountdown();
-        }
+    let hasStarted = false;
+
+    function tryStart() {
+        if (hasStarted) return;
+        hasStarted = true;
+        beginCountdown();
     }
 
-    function initMRAID() {
-        if (mraid.isViewable()) {
-            beginCountdown();
+    function onViewable(viewable) {
+        if (viewable) {
+            if (!hasStarted) {
+                tryStart();
+            } else {
+                resumeGame();
+            }
         } else {
-            mraid.addEventListener('viewableChange', onViewable);
+            pauseGame();
         }
     }
 
     if (typeof mraid !== 'undefined') {
-        if (mraid.getState() === 'loading') {
-            mraid.addEventListener('ready', initMRAID);
-        } else {
-            initMRAID();
+        mraid.addEventListener('viewableChange', onViewable);
+
+        if (mraid.getState() !== 'loading' && mraid.isViewable()) {
+            tryStart();
         }
+
+        mraid.addEventListener('ready', function () {
+            if (mraid.isViewable()) {
+                tryStart();
+            }
+        });
     } else {
-        // Fallback for non-MRAID environments (e.g. desktop browser testing)
         window.onload = () => {
             setTimeout(beginCountdown, 2500);
         };
@@ -469,7 +480,7 @@
     }
 
     function update() {
-        if (!isPlaying) return;
+        if (!isPlaying || isPaused) return;
 
         let rawTilt = null;
         const accel = window._nativeAccel;
@@ -570,8 +581,25 @@
         scoreText.innerText = `${score}/${TARGET_SCORE}`;
     }
 
+    let isPaused = false;
+
+    function pauseGame() {
+        if (!isPlaying || isPaused) return;
+        isPaused = true;
+        cancelAnimationFrame(gameLoop);
+        clearInterval(spawnInterval);
+    }
+
+    function resumeGame() {
+        if (!isPlaying || !isPaused) return;
+        isPaused = false;
+        spawnInterval = setInterval(spawnItem, 800);
+        gameLoop = requestAnimationFrame(update);
+    }
+
     function stopEngine() {
         isPlaying = false;
+        isPaused = false;
         cancelAnimationFrame(gameLoop);
         clearInterval(spawnInterval);
     }
