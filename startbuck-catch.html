@@ -16,27 +16,26 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             background-color: #111;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none; /* Prevent page scrolling while playing */
+            margin: 0;
+            touch-action: none;
         }
 
         /* Main Game Container */
         .ad-container {
-            width: 100%;
-            height: 100%;
+            position: fixed;
+            inset: 0;
             background: radial-gradient(circle at center, #006241 0%, #1e3932 100%);
-            position: relative;
             overflow: hidden;
             color: white;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         /* Subtle Background Pattern */
@@ -55,21 +54,21 @@
 
         .score-pill {
             position: absolute;
-            top: 15px;
-            right: 20px;
+            top: clamp(60px, 15vmin, 90px);
+            right: clamp(10px, 4vmin, 20px);
             z-index: 20;
-            color: white;
-            font-size: 14px;
+            font-size: clamp(11px, 3.5vmin, 14px);
             font-weight: 700;
             background: rgba(0,0,0,0.4);
-            padding: 6px 12px;
+            padding: clamp(4px, 1.5vmin, 6px) clamp(8px, 3vmin, 12px);
             border-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: clamp(4px, 1.5vmin, 6px);
             opacity: 1;
             transition: opacity 0.5s;
             border: 1px solid rgba(255,255,255,0.2);
+            color: white;
         }
 
         /* Screens */
@@ -104,13 +103,13 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.6);
-            padding: 12px 20px;
+            padding: clamp(8px, 3vmin, 12px) clamp(14px, 5vmin, 20px);
             border-radius: 25px;
-            font-size: 14px;
+            font-size: clamp(11px, 3.5vmin, 14px);
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: clamp(6px, 2.5vmin, 10px);
             white-space: nowrap;
             opacity: 1;
             transition: opacity 1s ease;
@@ -164,32 +163,43 @@
 
         /* Result Screens (Win/Lose) */
         .overlay-screen {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 50, 32, 0.55);
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: clamp(12px, 5vmin, 20px);
             z-index: 30;
+        }
+
+        .result-heading {
+            font-size: clamp(16px, 5vmin, 22px);
+            font-weight: 900;
+            color: #ffc107;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: clamp(12px, 4vmin, 20px);
         }
 
         .result-card {
             background: #f4f4f4;
             color: #333;
-            width: 100%;
+            width: 90%;
             max-width: 340px;
             border-radius: 20px;
-            padding: 40px 20px;
+            padding: clamp(20px, 6vmin, 32px) clamp(14px, 5vmin, 20px) clamp(24px, 8vmin, 40px);
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-bottom: clamp(20px, 6vmin, 32px);
         }
 
         .result-image {
-            font-size: clamp(50px, 18vmin, 90px);
-            margin-bottom: 10px;
+            font-size: clamp(80px, 28vmin, 140px);
+            margin-bottom: clamp(4px, 2vmin, 10px);
             filter: drop-shadow(0 10px 10px rgba(0,0,0,0.1));
             animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            line-height: 1.1;
         }
 
         @keyframes pop {
@@ -200,35 +210,69 @@
         .result-title {
             font-size: clamp(22px, 7vmin, 32px);
             font-weight: 900;
-            color: #000;
-            margin-bottom: 15px;
+            color: #222;
+            margin-bottom: clamp(6px, 2vmin, 10px);
         }
 
         .result-desc {
-            font-size: 16px;
-            color: #444;
-            line-height: 1.4;
-            margin-bottom: 30px;
-            font-weight: 700;
+            font-size: clamp(13px, 4vmin, 16px);
+            color: #555;
+            line-height: 1.5;
+            font-weight: 600;
         }
 
-        .action-btn {
-            background: transparent;
-            border: 2px solid #000;
-            padding: 12px 30px;
+        .cta-btn {
+            background: #FFFFFF;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            height: 48px;
+            padding: 0 12px 0 11px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            font-family: -apple-system, 'SF Pro Text', 'Montserrat', sans-serif;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #000000;
+            transition: all 0.2s;
+            margin-bottom: clamp(12px, 3.5vmin, 18px);
+            box-shadow: 0px 2px 12px rgba(0, 0, 0, 0.13);
+            max-width: 70%;
+            box-sizing: border-box;
+        }
+
+        .cta-btn svg {
+            flex-shrink: 0;
+        }
+
+        .cta-btn:active {
+            background: #EEEEEE;
+        }
+
+        .play-again-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            padding: clamp(8px, 2.5vmin, 12px) clamp(18px, 5.5vmin, 26px);
             border-radius: 25px;
-            font-size: 15px;
+            font-size: clamp(12px, 3.5vmin, 15px);
             font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            color: #000;
-            transition: background 0.2s;
+            gap: clamp(5px, 1.5vmin, 7px);
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.2s;
         }
 
-        .action-btn:active {
-            background: rgba(0,0,0,0.1);
+        .play-again-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .lose-heading {
+            color: #ff6b6b;
         }
 
         .hidden {
@@ -253,22 +297,25 @@
 
     <!-- Win Screen -->
     <div id="screen-win" class="screen overlay-screen">
+        <div class="result-heading">YOU WON!</div>
         <div class="result-card">
             <div class="result-image">🎉</div>
-            <h2 class="result-title">You Won!</h2>
+            <h2 class="result-title">FREE Drink!</h2>
             <p class="result-desc">You've unlocked a<br>FREE Starbucks drink!</p>
-            <button class="action-btn" onclick="resetGame()">↺ Play Again</button>
         </div>
+        <button class="cta-btn" onclick="handleCTA()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0FADFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Redeem Free Drink</button>
+        <button class="play-again-btn" onclick="resetGame()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg> Play Again</button>
     </div>
 
     <!-- Lose Screen (Caught Bomb) -->
     <div id="screen-lose" class="screen overlay-screen">
+        <div class="result-heading lose-heading">BOOM!</div>
         <div class="result-card">
             <div class="result-image">💥</div>
-            <h2 class="result-title">Boom!</h2>
+            <h2 class="result-title">Oh No!</h2>
             <p class="result-desc">You caught a bomb!<br>Avoid the bombs next time.</p>
-            <button class="action-btn" onclick="resetGame()">↺ Try Again</button>
         </div>
+        <button class="play-again-btn" onclick="resetGame()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg> Try Again</button>
     </div>
 
 </div>
@@ -300,10 +347,16 @@
     let targetX = playerX;
     let smoothedTilt = 0;
     let _deviceGamma = null;
-    const playerWidth = Math.max(45, container.clientWidth * 0.15);
-    const heightScale = container.clientHeight / 750;
     const TILT_CLAMP = 0.5;
     const TILT_SMOOTHING = 0.08;
+
+    function getPlayerWidth() {
+        return Math.max(45, container.clientWidth * 0.15);
+    }
+    function getHeightScale() {
+        return container.clientHeight / 750;
+    }
+
     player.style.transform = `translateX(${playerX}px) translateX(-50%)`;
 
     function beginCountdown() {
@@ -317,26 +370,39 @@
         }, 1200);
     }
 
-    function onViewable(viewable) {
-        if (viewable) {
-            beginCountdown();
-        }
+    // MRAID Integration
+    let hasStarted = false;
+
+    function tryStart() {
+        if (hasStarted) return;
+        hasStarted = true;
+        beginCountdown();
     }
 
-    function initMRAID() {
-        if (mraid.isViewable()) {
-            beginCountdown();
+    function onViewable(viewable) {
+        if (viewable) {
+            if (!hasStarted) {
+                tryStart();
+            } else {
+                resumeGame();
+            }
         } else {
-            mraid.addEventListener('viewableChange', onViewable);
+            pauseGame();
         }
     }
 
     if (typeof mraid !== 'undefined') {
-        if (mraid.getState() === 'loading') {
-            mraid.addEventListener('ready', initMRAID);
-        } else {
-            initMRAID();
+        mraid.addEventListener('viewableChange', onViewable);
+
+        if (mraid.getState() !== 'loading' && mraid.isViewable()) {
+            tryStart();
         }
+
+        mraid.addEventListener('ready', function () {
+            if (mraid.isViewable()) {
+                tryStart();
+            }
+        });
     } else {
         window.onload = () => {
             setTimeout(beginCountdown, 2500);
@@ -383,13 +449,13 @@
             el: itemEl,
             y: -50,
             x: startX,
-            speed: (3.5 + Math.random() * 2.5) * heightScale,
+            speed: (3.5 + Math.random() * 2.5) * getHeightScale(),
             type: isBad ? 'bad' : 'good'      // Perfectly decoupled from DOM
         });
     }
 
     function update() {
-        if (!isPlaying) return;
+        if (!isPlaying || isPaused) return;
 
         let rawTilt = null;
         const accel = window._nativeAccel;
@@ -401,8 +467,9 @@
         if (rawTilt !== null) {
             smoothedTilt += (rawTilt - smoothedTilt) * TILT_SMOOTHING;
             const cw = container.clientWidth;
+            const pw = getPlayerWidth();
             let newX = (cw / 2) + smoothedTilt * (cw / 2);
-            targetX = Math.max(playerWidth / 2, Math.min(cw - playerWidth / 2, newX));
+            targetX = Math.max(pw / 2, Math.min(cw - pw / 2, newX));
         }
 
         player.style.transform = `translateX(${Math.round(targetX)}px) translateX(-50%)`;
@@ -422,8 +489,8 @@
 
             // AABB Collision Detection
             // Added padding so you have to actually hit the cup part, not just the bounding box edge
-            const collisionPaddingX = 10;
-            const collisionPaddingY = 15;
+            const collisionPaddingX = Math.max(8, container.clientWidth * 0.04);
+            const collisionPaddingY = Math.max(10, container.clientHeight * 0.03);
 
             if (
                 itemRect.left < (playerRect.right - collisionPaddingX) &&
@@ -453,7 +520,7 @@
         // Read the type safely from our JS object
         if (item.type === 'good') {
             score++;
-            showFloatText('+1', item.x, player.offsetTop - 40);
+            showFloatText('+1', item.x, player.offsetTop - container.clientHeight * 0.05);
             updateScoreUI();
 
             // Clean up item
@@ -487,8 +554,25 @@
         scoreText.innerText = `${score}/${TARGET_SCORE}`;
     }
 
+    let isPaused = false;
+
+    function pauseGame() {
+        if (!isPlaying || isPaused) return;
+        isPaused = true;
+        cancelAnimationFrame(gameLoop);
+        clearInterval(spawnInterval);
+    }
+
+    function resumeGame() {
+        if (!isPlaying || !isPaused) return;
+        isPaused = false;
+        spawnInterval = setInterval(spawnItem, 800);
+        gameLoop = requestAnimationFrame(update);
+    }
+
     function stopEngine() {
         isPlaying = false;
+        isPaused = false;
         cancelAnimationFrame(gameLoop);
         clearInterval(spawnInterval);
     }
@@ -521,16 +605,24 @@
         startGame();
     }
 
-    // --- CONTROLS --- //
+    // --- INPUT CONTROLS --- //
+    function handleCTA() {
+        var url = 'https://www.example.com/redeem?offer=free-drink';
+        if (typeof mraid !== 'undefined') {
+            mraid.open(url);
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+
     function setupControls() {
         const updatePlayerX = (clientX) => {
             const containerRect = container.getBoundingClientRect();
-            // Map clientX relative to the container
+            const pw = getPlayerWidth();
             let x = clientX - containerRect.left;
 
-            // Clamp value so cup stays on screen
-            if (x < playerWidth / 2) x = playerWidth / 2;
-            if (x > containerRect.width - playerWidth / 2) x = containerRect.width - playerWidth / 2;
+            if (x < pw / 2) x = pw / 2;
+            if (x > containerRect.width - pw / 2) x = containerRect.width - pw / 2;
 
             targetX = x;
             playerX = x;
